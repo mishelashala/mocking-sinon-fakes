@@ -1,0 +1,16 @@
+{
+  "name": "sinon-playground",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "description": "",
+  "dependencies": {
+    "jest": "^26.4.2",
+    "sinon": "^9.0.3"
+  }
+}
