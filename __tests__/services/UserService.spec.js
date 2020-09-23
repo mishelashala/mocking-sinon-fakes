@@ -2,46 +2,69 @@ const { fake } = require("sinon");
 const { UserService } = require("../../src/services/UserService");
 
 describe("UserService", () => {
-  describe("#getOneByEmail", () => {
-    it("should search by email and return a single user", async () => {
-      const expectedUser = { name: "John Doe", email: "john@doe.com" };
-      const list = fake.resolves([expectedUser]);
-      const userService = UserService({ list });
-      const result = await userService.getOneByEmail("john@doe.com");
+  describe("#getAll", () => {
+    it("should return a list of users", async () => {
+      const userList = [{ name: "juan perez", email: "juan@perez.com" }];
+      const find = fake.resolves(userList);
+      const userService = UserService({ find });
 
-      expect(list.callCount).toBe(1);
-      expect(list.firstArg).toEqual({ email: "john@doe.com" });
-      expect(result).toEqual(expectedUser);
+      const result = await userService.getAll();
+
+      expect(find.callCount).toBe(1);
+      expect(find.firstArg).toBe(undefined);
+      expect(result).toEqual(userList);
     });
 
-    it("should throw an error if user is not found", async () => {
-      const errMessage = "User Not Found with email: john@doe.com";
-      const list = fake.resolves([]);
-      const userService = UserService({ list });
+    it("should throw an error if the cannot stablish a db conn", async () => {
+      const err = new Error("Could Not Connect To DB");
+      const find = fake.rejects(err);
 
       try {
-        await userService.getOneByEmail("john@doe.com");
+        const userService = UserService({ find });
+        await userService.getAll();
       } catch (err) {
-        expect(list.callCount).toBe(1);
-        expect(list.firstArg).toEqual({ email: "john@doe.com" });
-        expect(err.message).toEqual(errMessage);
+        expect(find.callCount).toBe(1);
+        expect(find.firstArg).toBe(undefined);
+        expect(err.message).toEqual("Unavailable Service");
+      }
+    });
+  });
+
+  describe("#getOneByEmail", () => {
+    it("should return a user by email", async () => {
+      const user = { name: "juan perez", email: "juan@perez.com" };
+      const find = fake.resolves([user]);
+      const userService = UserService({ find });
+
+      const result = await userService.getOneByEmail("juan@perez.com");
+
+      expect(find.callCount).toBe(1);
+      expect(find.firstArg).toEqual({ email: "juan@perez.com" });
+      expect(result).toEqual(user);
+    });
+
+    it("should return null when user is not found", async () => {
+      const find = fake.resolves(null);
+      try {
+        const userService = UserService({ find });
+        await userService.getOneByEmail("no-existe@hehe.com");
+      } catch (err) {
+        expect(find.callCount).toBe(1);
+        expect(find.firstArg).toEqual({ email: "no-existe@hehe.com" });
+        expect(err.message).toEqual("User Not Found");
       }
     });
 
-    it("should throw an error if could not connect to data source", async () => {
-      const errMessage =
-        "Service Unavailable: could not get user with email john@doe.com";
-      const list = fake.rejects(
-        new Error("Connection Error: Could not connect to data source")
-      );
-      const userService = UserService({ list });
+    it("should throw an error if the cannot stablish a db conn", async () => {
+      const err = new Error("Could Not Connect To DB");
+      const find = fake.rejects(err);
 
       try {
-        await userService.getOneByEmail("john@doe.com");
+        const userService = UserService({ find });
+        await userService.getOneByEmail("juan@perez.com");
       } catch (err) {
-        expect(list.callCount).toBe(1);
-        expect(list.firstArg).toEqual({ email: "john@doe.com" });
-        expect(err.message).toEqual(errMessage);
+        expect(find.callCount).toBe(1);
+        expect(err.message).toEqual("Unavailable Service");
       }
     });
   });

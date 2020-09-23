@@ -1,31 +1,38 @@
-// User = { id: string, age: number, name: string, email: string }
+// User = { name: string, email: string }
 
-const first = (xs) => xs[0];
+// find :: Query -> [User]
+// findOneById :: Id -> User | null
+// save :: User -> User
+// delete :: User -> null
 
-const CONNECTION_ERROR_MESSAGE =
-  "Connection Error: Could not connect to data source";
+const head = (xs) => xs[0];
 
 function UserService(userRepository) {
   async function getAll() {
-    return userRepository.list();
+    try {
+      const result = await userRepository.find();
+      return result;
+    } catch (err) {
+      if (err.message === "Could Not Connect To DB") {
+        throw new Error("Unavailable Service");
+      }
+
+      throw err;
+    }
   }
 
   async function getOneByEmail(email) {
     try {
-      const result = await userRepository.list({ email });
+      const result = await userRepository.find({ email });
 
-      if (!result.length) {
-        throw new Error(`User Not Found with email: ${email}`);
+      if (result === null) {
+        throw new Error("User Not Found");
       }
 
-      return first(result);
+      return head(result);
     } catch (err) {
-      if (err.message === CONNECTION_ERROR_MESSAGE) {
-        return Promise.reject(
-          new Error(
-            `Service Unavailable: could not get user with email ${email}`
-          )
-        );
+      if (err.message === "Could Not Connect To DB") {
+        return Promise.reject(new Error("Unavailable Service"));
       }
 
       return Promise.reject(err);
